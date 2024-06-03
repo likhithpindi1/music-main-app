@@ -6,6 +6,7 @@ const {
   music,
   getSongById,
   playlist,
+  favoriteSongs,
 } = require("../controllers/userControllers");
 const upload = require("../middleware/multer");
 path = require("path");
@@ -19,5 +20,6 @@ route.use(userAuth);
 route.post("/songs", upload.single("file"), music);
 route.get("/songs/:songId", getSongById);
 route.post("/playlists", playlist);
+route.post("/favorites", favoriteSongs);
 
 module.exports = route;

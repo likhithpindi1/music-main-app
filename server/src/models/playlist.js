@@ -1,5 +1,5 @@
 require("../DB/connection");
-
+const musicModle = require("../models/music");
 const mongoose = require("mongoose");
 
 const playlistSchema = mongoose.Schema({
@@ -13,20 +13,37 @@ playlistSchema.statics.playlistadd = async function (
   description,
   songIds
 ) {
-  const playlistadd = { name: name, description: description, songs: songIds };
-  let x = [
-    "60b8d5b54b8e4d3f88b6d9b3",
-    "60b8d5b54b8e4d3f88b6d9b5",
-    "60b8d6a64b8e4d3f88b6d9b4",
-  ];
-  for (let i = 0; i < x.length; i++) {
-    let y = playlistadd.songs.find((items) => items === x[i]);
-    let u = x.filter((item) => item !== y);
-    console.log("y", y);
-    console.log(u);
+  let find = await playlistModel.findOne({ name: name });
+  if (find) {
+    throw Error("name already taken");
   }
 
-  return playlistadd;
+  const playlistadd = { name: name, description: description, songs: songIds };
+  let addedSongs = [];
+
+  for (let i = 0; i < playlistadd.songs.length; i++) {
+    let findSong = await musicModle
+      .findOne({
+        songID: playlistadd.songs[i],
+      })
+      .select("songID");
+    if (findSong) {
+      addedSongs.push(findSong.songID);
+    }
+  }
+  let notAddedSongs = playlistadd.songs.filter(
+    (item) => !addedSongs.includes(item)
+  );
+  if (addedSongs.length === 0) {
+    throw Error("Invalid input data");
+  }
+
+  return {
+    PLname: playlistadd.name,
+    PLdescription: playlistadd.description,
+    addedSongs: addedSongs,
+    notAddedSongs: notAddedSongs,
+  };
 };
 
 const playlistModel = new mongoose.model("playlist", playlistSchema);

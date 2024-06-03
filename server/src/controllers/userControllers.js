@@ -2,6 +2,7 @@ const userModle = require("../models/user");
 const auth = require("../middleware/authorization");
 const musicModle = require("../models/music");
 const playlistModel = require("../models/playlist");
+const favoriteModel = require("../models/favorite");
 
 const user = async function (req, res) {
   const { email, password } = req.body;
@@ -72,17 +73,41 @@ const playlist = async function (req, res) {
   const { name, description, songIds } = req.body;
   // console.log(songIds);
   try {
-    const playlistsongs = await playlistModel.playlistadd(
-      name,
-      description,
-      songIds
-    );
+    const { PLname, PLdescription, addedSongs, notAddedSongs } =
+      await playlistModel.playlistadd(name, description, songIds);
+
+    await playlistModel.create({
+      name: PLname,
+      description: PLdescription,
+      songIds: addedSongs,
+    });
+
+    let findPLID = await playlistModel.findOne({ name: name }).select("_id");
+
     res.status(201).json({
       message: "Playlist created successfully",
-      playlistId: playlistsongs,
+      playlistId: findPLID,
+      error_to_add: notAddedSongs,
     });
   } catch (e) {
-    res.status(400).json({ message: "Invalid input data" });
+    res.status(400).json({ message: e.message });
   }
 };
-module.exports = { user, music, getSongById, playlist };
+
+const favoriteSongs = async function (req, res) {
+  const { songId, action } = req.body;
+  try {
+    const favoriteSongId = await favoriteModel.favoriteSongs(songId, action);
+
+    if (favoriteSongId === "add") {
+      res.status(200).json({ message: "Song added to favorites" });
+    }
+    if (favoriteSongId === "remove") {
+      res.status(200).json({ message: "Song removed from favorites" });
+    }
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+};
+
+module.exports = { user, music, getSongById, playlist, favoriteSongs };
