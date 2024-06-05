@@ -16,7 +16,7 @@ route.use(express.urlencoded({ extended: true }));
 route.use("/play", express.static(songPath));
 route.post("/auth/login", user);
 route.use(userAuth);
-
+//
 route.post("/songs", upload.single("file"), music);
 route.get("/songs/:songId", getSongById);
 route.post("/playlists", playlist);

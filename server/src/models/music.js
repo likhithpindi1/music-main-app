@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const mongoose = require("mongoose");
 const musicSchema = mongoose.Schema({
+  songFile: { data: Buffer, contentType: String },
   songID: { type: String, default: uuidv4 },
   title: { type: String },
   artist: { type: String },
@@ -12,7 +13,7 @@ const musicSchema = mongoose.Schema({
   duration: { type: Number },
   fileUrl: { type: String },
 });
-musicSchema.statics.music = async function (
+musicSchema.statics.songs = async function (
   title,
   artist,
   album,
@@ -21,32 +22,33 @@ musicSchema.statics.music = async function (
   duration,
   fileUrl
 ) {
-  try {
-    const find = await musicModle.findOne({
-      fileUrl: fileUrl,
-    });
-    if (!find) {
-      const main = {
-        title: title,
-        artist: artist,
-        album: album,
-        genre: genre,
-        releaseDate: releaseDate,
-        duration: duration,
-        fileUrl: fileUrl,
-      };
-      return main;
-    } else {
-      return "";
+  const data = {
+    title: title,
+    artist: artist,
+    album: album,
+    genre: genre,
+    releaseDate: releaseDate,
+    duration: duration,
+    fileUrl: fileUrl,
+  };
+  const songFound = await musicModle.findOne({ fileUrl: fileUrl });
+  if (songFound) {
+    if (songFound.fileUrl === fileUrl) {
+      throw Error("song is alreay added");
     }
-  } catch (error) {
-    throw Error("songs alreay exist");
+  }
+  if (data) {
+    return data;
+  }
+  if (!data) {
+    throw Error("Invalid input data");
   }
 };
+
 musicSchema.statics.getSongId = async function (songId) {
-  console.log(songId);
+  // console.log(songId);
   const find = await musicModle.findOne({ songID: songId });
-  console.log(find);
+  // console.log(find);
   if (find) {
     return find;
   } else {

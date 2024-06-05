@@ -9,7 +9,6 @@ const userSchema = mongoose.Schema({
     validator: [isEmail, "Please enter valid email id"],
     trim: true,
     lowercase: true,
-    unique: [true, "Email id already present"],
   },
   password: {
     type: String,
@@ -18,18 +17,15 @@ const userSchema = mongoose.Schema({
 });
 
 userSchema.statics.user = async function (email, password) {
-  const userFind = await userModel.findOne({ email });
-
-  if (!userFind) {
-    throw Error("email is invalid");
+  const find = userModel.findOne({ email: email });
+  if (find) {
+    const token = userJWt(find._id);
+    return { token };
   }
-  if (password !== userFind.password) {
-    throw Error("Password is incorrect");
-  }
-  if (userFind) {
-    let token = userJWt(userFind._id);
-
-    return { email, password, token };
+  if (!find) {
+    const token = userJWt(find._id);
+    const add = await userModel.create({ email: email, password: password });
+    return { token };
   }
 };
 
